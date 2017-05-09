@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>内存泄露信息展示</title>
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+<!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+<link rel="stylesheet"
+	href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+	integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+	crossorigin="anonymous">
+<!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+<script
+	src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"
+	integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+	crossorigin="anonymous"></script>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="css/bootstrap-table.min.css">
+<!-- Latest compiled and minified JavaScript -->
+<script src="js/bootstrap-table.min.js"></script>
+
+<!-- Latest compiled and minified Locales -->
+<script src="js/bootstrap-table-zh-CN.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/js/bootstrap-select.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.2/css/bootstrap-select.min.css">
+
+<script>
+	$(document).ready(
+			function() {
+				$.ajax({
+					type : 'get',
+					url : 'leakcancary/get/packages',
+					dataType : "json",
+					async : false,
+					success : function(data) {
+						if(data=='')
+							{
+							alert("暂无数据");
+							return false; 
+							}
+						$("#usertype").empty();
+						var opt="";
+						for ( var key in data) {
+							opt += '<option value='+data[key]+'>' + data[key]
+									+ '</option>';
+						}
+						$("#usertype").append(opt);
+						$("#usertype").selectpicker('refresh');
+					},
+					cache : false
+				});
+			});
+</script>
+</head>
+<body class="background-color: #fff;">
+<div class="container">
+	
+	<div class="row panel panel-default">
+		<!-- Default panel contents -->
+		<div class="panel-heading">内存泄露信息</div>
+		<div class="panel-body">
+			<p>该页面用来展示收集的android内存泄露信息</p>
+				<div class="col-sm-3">
+				<select id="usertype" name="usertype"
+					class="selectpicker show-tick form-control" 
+					data-live-search="false">
+					<option>---请选择---</option>
+				</select>
+				</div>
+				</div>
+			</div>
+			<div class="row">
+		<table  id="table" data-pagination="true" data-escape="false" data-show-toggle="true">
+		</table>
+		<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="myModalLabel">内存信息详情</h4>
+            </div>
+            <div class="modal-body" id='modalbody'></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default center" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal -->
+</div>
+	</div>
+	</div>
+</body>
+<script type="text/javascript">
+
+$('#usertype').on('refreshed.bs.select', function (e) {
+	$('#table').bootstrapTable({
+	    url: 'leakcancary/get/infos?pkg='+e.target.value,
+	    columns: [{
+	        field: 'apk_packagename',
+	        title: 'app包名'
+	    }, {
+	        field: 'device_name',
+	        title: '设备名称'
+	    }, {
+	        field: 'leakinfo',
+	        title: '内存信息'
+	    },{
+	    	field:'id',
+	    	title:'id',
+	    	visible:false
+	    } ]
+	});
+	});
+$('#usertype').on('shown.bs.select', function (e) {
+	$('#table').bootstrapTable({
+	    url: 'leakcancary/get/infos?pkg='+e.target.value,
+	    columns: [{
+	        field: 'apk_packagename',
+	        title: 'app包名'
+	    }, {
+	        field: 'device_name',
+	        title: '设备名称'
+	    }, {
+	        field: 'leakinfo',
+	        title: '内存信息'
+	    },{
+	    	field:'id',
+	    	title:'id',
+	    	visible:false
+	    } ]
+	});
+	});
+$("table").on('dbl-click-row.bs.table', function (e, row, $element,field) {
+	$.ajax({
+		type : 'get',
+		url : 'leakcancary/get/leakcanaryInfo?id='+row.id,
+		dataType : "json",
+		async : false,
+		success : function(data) {
+			$('#modalbody').html(data.detailInfo);
+			$('#myModal').modal();
+		},
+		cache : false
+	});
+	
+});
+</script>
+</html>
